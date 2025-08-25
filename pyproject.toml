@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scriptor"
+version = "3.0.0"
+authors = [{ name = "Isidore Lands & Alex" }]
+description = "A thematic toolset to automate the patching of source files."
+requires-python = ">=3.8"
+dependencies = [
+    "black",
+    "ruff",
+    "patch",
+    "watchdog",
+    "pytest"
+]
+
+[tool.setuptools.packages.find]
+where = ["fons"]  # Look for packages in the 'fons' directory
+
+[project.scripts]
+# Our new, definitive commands
+compara = "scriptor.comparator:main"
+speculator = "scriptor.speculator:main"
