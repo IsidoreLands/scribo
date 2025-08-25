@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scriptor"
-version = "3.0.0"
-authors = [{ name = "Isidore Lands & Alex" }]
+version = "3.1.0"
+authors = [{ name = "Isidore Lands & Alex M Xela" }]
 description = "A thematic toolset to automate the patching of source files."
 requires-python = ">=3.8"
 dependencies = [
@@ -13,7 +13,13 @@ dependencies = [
     "ruff",
     "patch",
     "watchdog",
-    "pytest"
+    "pytest",
+    "python-dotenv"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pip-audit",   # Added for security auditing
 ]
 
 [tool.setuptools.packages.find]
