@@ -10,16 +10,10 @@ import shutil
 import typer # <-- NEW
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from .perfector import perfice_resarcio # Using relative import
-from .probator_tool import run_tests # Using relative import
+from .perfector import perfice_resarcio
+from .probator_tool import run_tests
 
-# --- NEW: Create the Typer app for the 'speculator' subcommand ---
-app = typer.Typer(
-    name="speculator",
-    help="The autonomous daemon. Watches the inbox and processes patches."
-)
-
-# --- Global Configuration (unchanged) ---
+app = typer.Typer(name="speculator", help="The autonomous daemon. Watches the inbox and processes patches.")
 SCRIBO_INBOX = os.path.expanduser("~/scribo_inbox")
 QUARANTINE_DIR = os.path.join(SCRIBO_INBOX, "quarantine")
 LOG_FILE = os.path.join(SCRIBO_INBOX, "Acta_Scriptoris.log")
@@ -108,7 +102,6 @@ class Operarius(threading.Thread):
             logging.warning(f"Ornator: Formatting failed. Details: {e}")
 
 class PatchHandler(FileSystemEventHandler):
-    # ... (This entire class is unchanged) ...
     def __init__(self, work_queue):
         super().__init__()
         self.work_queue = work_queue
@@ -117,31 +110,22 @@ class PatchHandler(FileSystemEventHandler):
             logging.info(f"Speculator: Detected new patch -> {os.path.basename(event.src_path)}")
             self.work_queue.put(event.src_path)
 
-# --- NEW: The main logic is now a Typer command ---
-@app.command()
-def start():
+# The @app.callback() makes this function run automatically
+# when the user types 'scriptor speculator'. No 'start' needed.
+@app.callback(invoke_without_command=True)
+def run_daemon():
     """
     Starts the Speculator daemon.
     """
     setup_logging()
     logging.info("--- Speculator v3.1 ---")
-    os.makedirs(SCRIBO_INBOX, exist_ok=True)
-    os.makedirs(QUARANTINE_DIR, exist_ok=True)
-    work_queue = queue.Queue()
-    worker = Operarius(work_queue)
-    worker.start()
-    event_handler = PatchHandler(work_queue)
-    observer = Observer()
-    observer.schedule(event_handler, SCRIBO_INBOX, recursive=False)
-    observer.start()
+    os.makedirs(SCRIBO_INBOX, exist_ok=True); os.makedirs(QUARANTINE_DIR, exist_ok=True)
+    work_queue = queue.Queue(); worker = Operarius(work_queue); worker.start()
+    event_handler = PatchHandler(work_queue); observer = Observer()
+    observer.schedule(event_handler, SCRIBO_INBOX, recursive=False); observer.start()
     logging.info(f"System online. Observing for patch files in: {SCRIBO_INBOX}")
     try:
-        while True:
-            time.sleep(1)
+        while True: time.sleep(1)
     except KeyboardInterrupt:
-        logging.info("Shutdown signal received. Cleaning up.")
-        observer.stop()
-        work_queue.put(None)
-    observer.join()
-    worker.join()
-    logging.info("Speculator stopped.")
+        logging.info("Shutdown signal received. Cleaning up."); observer.stop(); work_queue.put(None)
+    observer.join(); worker.join(); logging.info("Speculator stopped.")

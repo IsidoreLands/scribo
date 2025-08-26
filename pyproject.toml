@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scriptor"
-version = "3.1.0"
+version = "4.0.0" # A new major version for a major new capability
 authors = [{ name = "Isidore Lands & Alex M Xela" }]
-description = "A thematic toolset to automate the patching of source files."
+description = "The canonized SDK and Fleet Commander for the AetherOS ecosystem."
 requires-python = ">=3.8"
 dependencies = [
     "black",
@@ -14,16 +14,19 @@ dependencies = [
     "patch",
     "watchdog",
     "pytest",
-    "python-dotenv"
-]
-
-[project.optional-dependencies]
-dev = [
-    "pip-audit",   # Added for security auditing
+    "python-dotenv",
+    "typer[all]",
+    "paramiko"  # <<< NEW: For SSH connections
 ]
 
 [tool.setuptools.packages.find]
-where = ["fons"]  # Look for packages in the 'fons' directory
+where = ["fons"]
+
+# --- NEW SECTION ---
+# This tells our installer to include non-Python files found in our package.
+[tool.setuptools.package-data]
+scriptor = ["templates/sm_sensor/*"]
+# -------------------
 
 [project.scripts]
 scriptor = "scriptor.main:app"
