@@ -124,6 +124,10 @@ class Operarius(threading.Thread):
 
     def run_ornator(self, target_file):
         """Ornator: The Arranger. Runs formatters on the target file."""
+        if not target_file.endswith('.py'):
+            logging.info(f"Ornator: Skipping non-Python file: {os.path.basename(target_file)}")
+            return
+
         logging.info(f"Ornator: Formatting '{os.path.basename(target_file)}'...")
         try:
             venv_bin_dir = os.path.dirname(sys.executable)

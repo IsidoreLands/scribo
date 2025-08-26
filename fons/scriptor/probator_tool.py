@@ -8,7 +8,8 @@ def find_project_root(start_path):
     Finds the project root by searching upwards for a .git directory
     or a pyproject.toml file.
     """
-    current_path = os.path.abspath(start_path)
+    # Using os.path.realpath to resolve any symlinks for robustness
+    current_path = os.path.realpath(start_path)
     while True:
         if os.path.isdir(os.path.join(current_path, '.git')) or \
            os.path.isfile(os.path.join(current_path, 'pyproject.toml')):
@@ -27,35 +28,48 @@ def run_tests(target_file):
     logging.info("Probator: Verifying patch integrity...")
     
     project_root = find_project_root(os.path.dirname(target_file))
+
     if not project_root:
         logging.warning("Probator: Could not determine project root. Skipping tests.")
-        return True
+        return True # If we can't find a project, we can't run tests, so we assume success.
 
     logging.info(f"Probator: Found project root at '{project_root}'. Running pytest...")
 
     try:
-        # --- THIS IS THE NEW, ROBUST LOGIC ---
+        # Determine the absolute path to the pytest executable within the current venv
         venv_bin_dir = os.path.dirname(sys.executable)
         pytest_path = os.path.join(venv_bin_dir, "pytest")
         
-        # Check if pytest actually exists where we expect it
+        # A fallback check in case pytest wasn't installed correctly
         if not os.path.exists(pytest_path):
-            logging.warning(f"Probator: 'pytest' not found at '{pytest_path}'. Skipping tests.")
+            logging.warning(f"Probator: 'pytest' executable not found at '{pytest_path}'. Skipping tests.")
             return True
 
+        # '--no-test-found-exit-code=5' is a pytest 8+ feature. We'll use a more compatible approach.
+        # We will check the exit code directly. Pytest exits with 5 if no tests are found.
+        # We remove `check=True` so the command doesn't raise an exception on non-zero exit codes.
         result = subprocess.run(
-            [pytest_path], # Use the absolute path
+            [pytest_path],
             cwd=project_root,
-            check=True,
             capture_output=True,
             text=True
         )
-        # ------------------------------------
 
-        logging.info("Probator: All tests passed.")
-        return True
-    except subprocess.CalledProcessError as e:
-        logging.error("Probator: Tests FAILED. Reversion is necessary.")
-        error_summary = "\n".join(e.stdout.splitlines()[-15:]) # More context on failure
-        logging.error(f"Probator: Pytest failure summary:\n{error_summary}")
+        # Success is either exit code 0 (tests passed) or 5 (no tests found).
+        if result.returncode == 0 or result.returncode == 5:
+            if result.returncode == 5:
+                logging.info("Probator: No tests were found.")
+            logging.info("Probator: Verification successful.")
+            return True
+        else:
+            # Any other non-zero exit code is a failure.
+            logging.error("Probator: Tests FAILED. Reversion is necessary.")
+            # Combine stdout and stderr for a complete failure log
+            error_summary = f"STDOUT:\n{result.stdout}\n\nSTDERR:\n{result.stderr}"
+            logging.error(f"Probator: Pytest failure summary:\n{error_summary}")
+            return False
+
+    except Exception as e:
+        # A catch-all for unexpected errors during the test run
+        logging.error(f"Probator: An unexpected error occurred while running tests: {e}")
         return False

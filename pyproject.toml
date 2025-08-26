@@ -26,7 +26,4 @@ dev = [
 where = ["fons"]  # Look for packages in the 'fons' directory
 
 [project.scripts]
-# Our new, definitive commands
-compara = "scriptor.comparator:main"
-speculator = "scriptor.speculator:main"
-inceptor = "scriptor.inceptor:main"
+scriptor = "scriptor.main:app"

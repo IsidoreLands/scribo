@@ -1,37 +1,19 @@
-# inceptor.py
-# A tool to create and initialize a new project initiative with a dedicated venv.
 import os
 import sys
 import venv
-
-# The root directory where all projects will be stored.
-PROJECTS_ROOT = os.path.expanduser("~/scribo_projects")
-
-def create_initiative(initiative_path): # Take the full path as an argument
-    """
-    Creates a Python virtual environment within a given project directory.
-    """
+import subprocess
+# This is now a library function, not a script with a main block
+def create_initiative(initiative_path, user_name):
     try:
         venv_path = os.path.join(initiative_path, "venv")
-        print(f"Inceptor: Initializing project structure in '{initiative_path}'...")
+        print(f"Inceptor: Initializing '{os.path.basename(initiative_path)}' for user '{user_name}'...")
         os.makedirs(venv_path, exist_ok=True)
         venv.create(venv_path, with_pip=True)
-        print(f"Inceptor: Successfully created venv at '{venv_path}'.")
+        with open(os.path.join(initiative_path, "README.md"), "w") as f:
+            f.write(f"# Initiative: {os.path.basename(initiative_path)}\n\nOwner: {user_name}\n")
+        subprocess.run(["git", "init"], cwd=initiative_path, capture_output=True)
         print("Inceptor: Project initialized.")
         return True
-
     except Exception as e:
         print(f"Inceptor: ERROR - Could not create initiative. Details: {e}")
         return False
-
-def main():
-    if len(sys.argv) != 2:
-        # The argument will be the mount point inside the container, e.g., "."
-        print("Usage: inceptor <path_to_initiative>")
-        sys.exit(1)
-    initiative_path = sys.argv[1]
-    create_initiative(initiative_path)
-
-if __name__ == "__main__":
-    main()
-
